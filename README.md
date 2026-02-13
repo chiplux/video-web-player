@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Video Player Tutorial
 
-## Getting Started
+A modern, high-performance web video player tutorial built with Next.js. This application scans a local directory for video tutorials, organizes them into an accordion-style sidebar, and supports playback with subtitles and advanced streaming features.
 
-First, run the development server:
+## 🚀 Features
+
+- **Recursive Directory Scanning**: Automatically discovers video files (`.mp4`, `.mkv`, `.webm`) and subtitles (`.srt`, `.vtt`) in the `video` directory.
+- **Accordion Menu Navigation**: Clean and organized sidebar to navigate through tutorial folders.
+- **Advanced Video Streaming**: Supports **Byte Range Requests** for smooth seeking and performance.
+- **On-the-fly Subtitle Conversion**: Automatically converts `.srt` files to browser-compatible `.vtt` format.
+- **Premium Dark Theme**: Sleek, focused UI designed for a better viewing experience.
+- **Hover Title Overlay**: Reveals the current video title when hovering over the player.
+- **Dockerized**: Ready for production with multi-stage Docker builds and Docker Compose.
+- **Developer Friendly**: Includes a `Makefile` for common tasks and a comprehensive unit testing suite.
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **Styling**: Tailwind CSS
+- **Testing**: Jest & React Testing Library
+- **Infrastructure**: Docker & Docker Compose
+- **Language**: TypeScript
+
+## 🏁 Getting Started
+
+### Prerequisites
+
+- Node.js (v20+)
+- Docker (optional, for containerization)
+- A `video` directory at the root containing your tutorial folders.
+
+### Local Development
+
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+2. **Run the development server**:
+   ```bash
+   npm run dev
+   ```
+   The app will be available at [http://localhost:4500](http://localhost:4500).
+
+3. **Run tests**:
+   ```bash
+   npm test
+   ```
+
+### Running with Docker
+
+The easiest way to run the application is using Docker Compose:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+make docker-up
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This will build the image and start the container with the `video` directory mounted as a volume.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📂 Makefile Commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Command            | Description                          |
+| :----------------- | :----------------------------------- |
+| `make dev`         | Start the local development server   |
+| `make build`       | Build the Next.js application        |
+| `make test`        | Run the unit test suite              |
+| `make docker-up`   | Build and start the Docker container |
+| `make docker-down` | Stop the Docker container            |
 
-## Learn More
+## 🧪 Testing
 
-To learn more about Next.js, take a look at the following resources:
+The project uses Jest for unit testing. Tests are located in the `__tests__` directory and cover both server-side utilities and client-side components.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+make test
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📄 License
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
