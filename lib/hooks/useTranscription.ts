@@ -10,6 +10,8 @@ export function useTranscription(enabled: boolean) {
     const stopRecognition = useCallback(() => {
         if (recognitionRef.current) {
             try {
+                recognitionRef.current.onresult = null;
+                recognitionRef.current.onend = null;
                 recognitionRef.current.stop();
             } catch (e) {
                 // Ignore stop errors
@@ -40,28 +42,22 @@ export function useTranscription(enabled: boolean) {
         };
 
         recognition.onresult = (event: any) => {
-            let finalTranscript = '';
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript;
-                }
-            }
-            if (finalTranscript) {
-                setTranscript(finalTranscript);
-            } else {
-                const results = event.results;
-                const last = results[results.length - 1];
-                if (last && last[0]) {
-                    setTranscript(last[0].transcript);
-                }
+            // Only take the very last result segment to keep it to one line
+            // and avoid accumulating historical text which causes lag
+            const latestResultIndex = event.results.length - 1;
+            const latestResult = event.results[latestResultIndex];
+
+            if (latestResult && latestResult[0]) {
+                const text = latestResult[0].transcript.trim();
+                setTranscript(text);
             }
         };
 
         recognition.onerror = (event: any) => {
-            console.error('Speech recognition error', event.error);
             if (event.error === 'no-speech' || event.error === 'aborted') {
                 return;
             }
+            console.error('Speech recognition error', event.error);
             stopRecognition();
         };
 
@@ -90,7 +86,7 @@ export function useTranscription(enabled: boolean) {
             startRecognition();
         } else {
             stopRecognition();
-            setTranscript((prev) => prev === '' ? prev : '');
+            setTranscript('');
         }
 
         return () => {

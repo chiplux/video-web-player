@@ -124,18 +124,18 @@ export default function VideoPlayer({ src, title, subtitleSrc, onEnded }: VideoP
             {/* AI Transcript Overlay */}
             {aiEnabled && (
                 <div className="absolute bottom-16 left-0 w-full flex justify-center px-8 pointer-events-none">
-                    <div className="bg-black/60 backdrop-blur-xl border border-white/20 px-6 py-3 rounded-2xl shadow-2xl max-w-[80%] text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="bg-black/60 backdrop-blur-xl border border-white/20 px-6 py-2.5 rounded-full shadow-2xl max-w-[90%] min-w-[200px] text-center animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
                         {isProcessing && !transcript ? (
-                            <div className="flex items-center gap-3">
-                                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                                <span className="text-gray-300 text-sm font-medium italic">Listening...</span>
+                            <div className="flex items-center justify-center gap-3">
+                                <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                                <span className="text-gray-300 text-xs font-medium uppercase tracking-wider">Listening...</span>
                             </div>
                         ) : transcript ? (
-                            <p className="text-white text-lg font-medium leading-relaxed drop-shadow-md">
+                            <p className="text-white text-base font-semibold truncate px-2 drop-shadow-md">
                                 {transcript}
                             </p>
                         ) : (
-                            <span className="text-gray-400 text-sm italic">Initializing...</span>
+                            <span className="text-gray-400 text-xs italic">Initializing AI...</span>
                         )}
                     </div>
                 </div>
