@@ -131,7 +131,7 @@ export default function VideoPlayer({ src, title, subtitleSrc, onEnded }: VideoP
                                 <span className="text-gray-300 text-xs font-medium uppercase tracking-wider">Listening...</span>
                             </div>
                         ) : transcript ? (
-                            <p className="text-white text-base font-semibold truncate px-2 drop-shadow-md">
+                            <p className="text-white text-sm font-semibold whitespace-nowrap overflow-hidden drop-shadow-md px-2">
                                 {transcript}
                             </p>
                         ) : (

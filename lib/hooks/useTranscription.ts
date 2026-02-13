@@ -42,14 +42,17 @@ export function useTranscription(enabled: boolean) {
         };
 
         recognition.onresult = (event: any) => {
-            // Only take the very last result segment to keep it to one line
-            // and avoid accumulating historical text which causes lag
             const latestResultIndex = event.results.length - 1;
             const latestResult = event.results[latestResultIndex];
 
             if (latestResult && latestResult[0]) {
-                const text = latestResult[0].transcript.trim();
-                setTranscript(text);
+                const fullText = latestResult[0].transcript.trim();
+                // To keep it to one line without truncation, we only show the last 10-12 words
+                const words = fullText.split(' ');
+                const limitedText = words.length > 12
+                    ? '... ' + words.slice(-12).join(' ')
+                    : fullText;
+                setTranscript(limitedText);
             }
         };
 
