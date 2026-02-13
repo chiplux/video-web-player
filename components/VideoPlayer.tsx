@@ -13,6 +13,18 @@ export default function VideoPlayer({ src, title, subtitleSrc, onEnded }: VideoP
     const [isHovering, setIsHovering] = useState(false);
     const [autoPlay, setAutoPlay] = useState(true);
     const videoRef = useRef<HTMLVideoElement>(null);
+    const togglePictureInPicture = async () => {
+        if (!videoRef.current) return;
+        try {
+            if (document.pictureInPictureElement) {
+                await document.exitPictureInPicture();
+            } else if (document.pictureInPictureEnabled) {
+                await videoRef.current.requestPictureInPicture();
+            }
+        } catch (error) {
+            console.error('PiP failed:', error);
+        }
+    };
 
     return (
         <div
@@ -46,18 +58,32 @@ export default function VideoPlayer({ src, title, subtitleSrc, onEnded }: VideoP
                         {title}
                     </h2>
 
-                    {/* Auto-play Switch */}
-                    <div className="flex items-center gap-3 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-                        <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400">Auto-play</span>
+                    <div className="flex items-center gap-3">
+                        {/* PiP Button */}
                         <button
-                            onClick={() => setAutoPlay(!autoPlay)}
-                            aria-label="Toggle auto-play"
-                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none ${autoPlay ? 'bg-white' : 'bg-gray-700'}`}
+                            onClick={togglePictureInPicture}
+                            aria-label="Toggle Picture-in-Picture"
+                            className="p-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 text-gray-400 hover:text-white hover:bg-black/60 transition-all"
+                            title="Always on top (PiP)"
                         >
-                            <span
-                                className={`inline-block h-3 w-3 transform rounded-full transition-transform duration-200 ${autoPlay ? 'translate-x-5 bg-black' : 'translate-x-1 bg-gray-300'}`}
-                            />
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                            </svg>
                         </button>
+
+                        {/* Auto-play Switch */}
+                        <div className="flex items-center gap-3 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                            <span className="text-[10px] uppercase tracking-wider font-bold text-gray-400">Auto-play</span>
+                            <button
+                                onClick={() => setAutoPlay(!autoPlay)}
+                                aria-label="Toggle auto-play"
+                                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none ${autoPlay ? 'bg-white' : 'bg-gray-700'}`}
+                            >
+                                <span
+                                    className={`inline-block h-3 w-3 transform rounded-full transition-transform duration-200 ${autoPlay ? 'translate-x-5 bg-black' : 'translate-x-1 bg-gray-300'}`}
+                                />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
