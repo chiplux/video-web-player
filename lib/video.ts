@@ -7,85 +7,60 @@ export interface VideoFile {
     name: string;
     path: string;
     subtitles?: string;
-    folder?: string;
 }
 
-export interface Tutorial {
+export interface Folder {
     name: string;
+    path: string;
     videos: VideoFile[];
+    subfolders: Folder[];
 }
 
-function getAllFiles(dirPath: string, arrayOfFiles: string[] = []): string[] {
-    const files = fs.readdirSync(dirPath);
+function scanDirectory(dirPath: string): Folder {
+    const name = path.basename(dirPath);
+    const relPath = path.relative(VIDEO_DIR, dirPath);
 
-    files.forEach(function (file) {
-        const fullPath = path.join(dirPath, file);
-        if (fs.statSync(fullPath).isDirectory()) {
-            arrayOfFiles = getAllFiles(fullPath, arrayOfFiles);
-        } else {
-            arrayOfFiles.push(fullPath);
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+
+    const videos: VideoFile[] = [];
+    const subfolders: Folder[] = [];
+
+    // First pass: collect all files in this directory to find subtitles easily
+    const allFileNames = entries.filter(e => e.isFile()).map(e => e.name);
+
+    entries.forEach(entry => {
+        const fullPath = path.join(dirPath, entry.name);
+
+        if (entry.isDirectory()) {
+            subfolders.push(scanDirectory(fullPath));
+        } else if (/\.(mp4|mkv|webm)$/i.test(entry.name)) {
+            const baseName = path.parse(entry.name).name;
+            const subtitle = allFileNames.find(f => f.startsWith(baseName) && /\.(srt|vtt)$/i.test(f));
+
+            videos.push({
+                name: entry.name,
+                path: path.relative(VIDEO_DIR, fullPath),
+                subtitles: subtitle ? path.relative(VIDEO_DIR, path.join(dirPath, subtitle)) : undefined,
+            });
         }
     });
 
-    return arrayOfFiles;
+    return {
+        name: relPath === '' ? 'Tutorials' : name,
+        path: relPath,
+        videos: videos.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })),
+        subfolders: subfolders.sort((a, b) => a.name.localeCompare(b.name)),
+    };
 }
 
-export function getTutorials(): Tutorial[] {
+export function getTutorials(): Folder[] {
     console.log(`Scanning VIDEO_DIR: ${VIDEO_DIR}`);
     if (!fs.existsSync(VIDEO_DIR)) {
         console.warn(`VIDEO_DIR does not exist: ${VIDEO_DIR}`);
         return [];
     }
 
-    const entries = fs.readdirSync(VIDEO_DIR, { withFileTypes: true });
-    console.log(`Found ${entries.length} entries in VIDEO_DIR`);
-
-    const topFolders = entries
-        .filter(dirent => {
-            const isDir = dirent.isDirectory();
-            // Fallback for some filesystem types that don't report correctly
-            if (!isDir) {
-                try {
-                    return fs.statSync(path.join(VIDEO_DIR, dirent.name)).isDirectory();
-                } catch {
-                    return false;
-                }
-            }
-            return isDir;
-        })
-        .map(dirent => dirent.name);
-
-    console.log(`Top level folders: ${topFolders.join(', ')}`);
-
-    return topFolders.map(folder => {
-        const folderPath = path.join(VIDEO_DIR, folder);
-        console.log(`Scanning folder: ${folderPath}`);
-        const allFiles = getAllFiles(folderPath);
-        console.log(`Found ${allFiles.length} files in ${folder}`);
-
-        const videoFiles: VideoFile[] = allFiles
-            .filter(file => /\.(mp4|mkv|webm)$/i.test(file))
-            .map(file => {
-                const relPath = path.relative(VIDEO_DIR, file);
-                const folderName = path.dirname(relPath);
-                const baseName = path.parse(file).name;
-
-                // Find subtitle in the same directory
-                const dir = path.dirname(file);
-                const dirFiles = fs.readdirSync(dir);
-                const subtitle = dirFiles.find(f => f.startsWith(baseName) && /\.(srt|vtt)$/i.test(f));
-
-                return {
-                    name: path.basename(file),
-                    path: relPath, // Store relative path without encoding
-                    subtitles: subtitle ? path.join(folderName, subtitle) : undefined,
-                    folder: folderName,
-                };
-            });
-
-        return {
-            name: folder,
-            videos: videoFiles,
-        };
-    });
+    // We return the subfolders of the VIDEO_DIR as the top-level "Tutorials"
+    const rootFolder = scanDirectory(VIDEO_DIR);
+    return rootFolder.subfolders;
 }

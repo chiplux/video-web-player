@@ -1,18 +1,26 @@
 'use client';
 
 import { useState } from 'react';
-import { Tutorial, VideoFile } from '@/lib/video';
+import { Folder, VideoFile } from '@/lib/video';
 import TutorialList from '@/components/TutorialList';
 import VideoPlayer from '@/components/VideoPlayer';
 
 interface HomeClientProps {
-    tutorials: Tutorial[];
+    tutorials: Folder[];
 }
 
 export default function HomeClient({ tutorials }: HomeClientProps) {
-    const [selectedVideo, setSelectedVideo] = useState<VideoFile | null>(
-        tutorials.length > 0 && tutorials[0].videos.length > 0 ? tutorials[0].videos[0] : null
-    );
+    // Recursively find first video
+    const findFirstVideo = (folders: Folder[]): VideoFile | null => {
+        for (const f of folders) {
+            if (f.videos.length > 0) return f.videos[0];
+            const sub = findFirstVideo(f.subfolders);
+            if (sub) return sub;
+        }
+        return null;
+    };
+
+    const [selectedVideo, setSelectedVideo] = useState<VideoFile | null>(findFirstVideo(tutorials));
 
     return (
         <>
@@ -44,7 +52,7 @@ export default function HomeClient({ tutorials }: HomeClientProps) {
                                         {selectedVideo.name.replace(/\.[^/.]+$/, "")}
                                     </h2>
                                     <p className="text-gray-400 text-sm mt-1">
-                                        Path: <span className="text-gray-300 font-medium">{selectedVideo.folder || 'Root'}</span>
+                                        File: <span className="text-gray-300 font-medium">{selectedVideo.path}</span>
                                     </p>
                                 </div>
                             </div>
