@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useTranscription } from '@/lib/hooks/useTranscription';
 
 interface VideoPlayerProps {
     src: string;
@@ -12,7 +13,23 @@ interface VideoPlayerProps {
 export default function VideoPlayer({ src, title, subtitleSrc, onEnded }: VideoPlayerProps) {
     const [isHovering, setIsHovering] = useState(false);
     const [autoPlay, setAutoPlay] = useState(true);
+    const [aiEnabled, setAiEnabled] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
+
+    const { transcript, isProcessing } = useTranscription(aiEnabled);
+
+    // Auto-disable AI if user switches to a video with real subtitles
+    useEffect(() => {
+        if (subtitleSrc) {
+            setAiEnabled(false);
+        }
+    }, [subtitleSrc]);
+
+    const toggleAI = () => {
+        if (subtitleSrc) return;
+        setAiEnabled(!aiEnabled);
+    };
+
     const togglePictureInPicture = async () => {
         if (!videoRef.current) return;
         try {
@@ -59,6 +76,22 @@ export default function VideoPlayer({ src, title, subtitleSrc, onEnded }: VideoP
                     </h2>
 
                     <div className="flex items-center gap-3">
+                        {/* AI Subtitles Toggle */}
+                        <button
+                            onClick={toggleAI}
+                            disabled={!!subtitleSrc}
+                            aria-label="Toggle AI Subtitles"
+                            className={`p-2 backdrop-blur-md rounded-full border transition-all ${aiEnabled
+                                ? 'bg-white border-white text-black shadow-[0_0_15px_rgba(255,255,255,0.5)]'
+                                : 'bg-black/40 border-white/10 text-gray-400 hover:text-white hover:bg-black/60'
+                                } ${!!subtitleSrc ? 'opacity-30 cursor-not-allowed' : ''}`}
+                            title={subtitleSrc ? "Real subtitles available" : "Live AI Subtitles (Browser)"}
+                        >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                            </svg>
+                        </button>
+
                         {/* PiP Button */}
                         <button
                             onClick={togglePictureInPicture}
@@ -87,6 +120,26 @@ export default function VideoPlayer({ src, title, subtitleSrc, onEnded }: VideoP
                     </div>
                 </div>
             </div>
+
+            {/* AI Transcript Overlay */}
+            {aiEnabled && (
+                <div className="absolute bottom-16 left-0 w-full flex justify-center px-8 pointer-events-none">
+                    <div className="bg-black/60 backdrop-blur-xl border border-white/20 px-6 py-3 rounded-2xl shadow-2xl max-w-[80%] text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        {isProcessing && !transcript ? (
+                            <div className="flex items-center gap-3">
+                                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                                <span className="text-gray-300 text-sm font-medium italic">Listening...</span>
+                            </div>
+                        ) : transcript ? (
+                            <p className="text-white text-lg font-medium leading-relaxed drop-shadow-md">
+                                {transcript}
+                            </p>
+                        ) : (
+                            <span className="text-gray-400 text-sm italic">Initializing...</span>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
