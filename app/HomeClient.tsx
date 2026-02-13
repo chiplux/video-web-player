@@ -22,6 +22,24 @@ export default function HomeClient({ tutorials }: HomeClientProps) {
 
     const [selectedVideo, setSelectedVideo] = useState<VideoFile | null>(findFirstVideo(tutorials));
 
+    // Get flat list of all videos in order for auto-play
+    const getAllVideos = (folders: Folder[]): VideoFile[] => {
+        let videos: VideoFile[] = [];
+        for (const f of folders) {
+            videos = [...videos, ...f.videos];
+            videos = [...videos, ...getAllVideos(f.subfolders)];
+        }
+        return videos;
+    };
+
+    const handleVideoEnded = () => {
+        const allVideos = getAllVideos(tutorials);
+        const currentIndex = allVideos.findIndex(v => v.path === selectedVideo?.path);
+        if (currentIndex !== -1 && currentIndex < allVideos.length - 1) {
+            setSelectedVideo(allVideos[currentIndex + 1]);
+        }
+    };
+
     return (
         <>
             <aside className="w-80 bg-[#0a0a0a] border-r border-white/10 flex flex-col">
@@ -46,6 +64,7 @@ export default function HomeClient({ tutorials }: HomeClientProps) {
                                     src={`/api/video?path=${encodeURIComponent(selectedVideo.path)}`}
                                     title={selectedVideo.name}
                                     subtitleSrc={selectedVideo.subtitles ? `/api/video?path=${encodeURIComponent(selectedVideo.subtitles)}` : undefined}
+                                    onEnded={handleVideoEnded}
                                 />
                                 <div className="pt-4 border-t border-white/5">
                                     <h2 className="text-2xl font-semibold text-white">
