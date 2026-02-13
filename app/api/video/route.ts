@@ -32,7 +32,12 @@ export async function GET(request: NextRequest) {
         return new NextResponse('File not found', { status: 404 });
     }
 
+    console.log(`API Request for: ${absolutePath}`);
     const stat = fs.statSync(absolutePath);
+    if (stat.isDirectory()) {
+        console.warn(`Attempted to read directory: ${absolutePath}`);
+        return new NextResponse('Cannot read directory', { status: 400 });
+    }
     const fileSize = stat.size;
 
     if (absolutePath.endsWith('.srt')) {

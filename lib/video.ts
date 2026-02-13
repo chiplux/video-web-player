@@ -31,17 +31,37 @@ function getAllFiles(dirPath: string, arrayOfFiles: string[] = []): string[] {
 }
 
 export function getTutorials(): Tutorial[] {
+    console.log(`Scanning VIDEO_DIR: ${VIDEO_DIR}`);
     if (!fs.existsSync(VIDEO_DIR)) {
+        console.warn(`VIDEO_DIR does not exist: ${VIDEO_DIR}`);
         return [];
     }
 
-    const topFolders = fs.readdirSync(VIDEO_DIR, { withFileTypes: true })
-        .filter(dirent => dirent.isDirectory())
+    const entries = fs.readdirSync(VIDEO_DIR, { withFileTypes: true });
+    console.log(`Found ${entries.length} entries in VIDEO_DIR`);
+
+    const topFolders = entries
+        .filter(dirent => {
+            const isDir = dirent.isDirectory();
+            // Fallback for some filesystem types that don't report correctly
+            if (!isDir) {
+                try {
+                    return fs.statSync(path.join(VIDEO_DIR, dirent.name)).isDirectory();
+                } catch {
+                    return false;
+                }
+            }
+            return isDir;
+        })
         .map(dirent => dirent.name);
+
+    console.log(`Top level folders: ${topFolders.join(', ')}`);
 
     return topFolders.map(folder => {
         const folderPath = path.join(VIDEO_DIR, folder);
+        console.log(`Scanning folder: ${folderPath}`);
         const allFiles = getAllFiles(folderPath);
+        console.log(`Found ${allFiles.length} files in ${folder}`);
 
         const videoFiles: VideoFile[] = allFiles
             .filter(file => /\.(mp4|mkv|webm)$/i.test(file))

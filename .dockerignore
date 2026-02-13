@@ -1,0 +1,15 @@
+node_modules
+.next
+video
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+Makefile
+__tests__
+jest.config.js
+jest.setup.js
+README.md
+walkthrough.md
+task.md
+implementation_plan.md

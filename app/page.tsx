@@ -1,6 +1,8 @@
 import { getTutorials } from '@/lib/video';
 import HomeClient from './HomeClient';
 
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   const tutorials = getTutorials();
 
