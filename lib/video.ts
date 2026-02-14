@@ -9,11 +9,26 @@ export interface VideoFile {
     subtitles?: string;
 }
 
+export interface ResourceFile {
+    name: string;
+    path: string;
+    type: 'pdf' | 'text' | 'code' | 'other';
+}
+
 export interface Folder {
     name: string;
     path: string;
     videos: VideoFile[];
+    resources: ResourceFile[];
     subfolders: Folder[];
+}
+
+function getResourceType(ext: string): 'pdf' | 'text' | 'code' | 'other' {
+    const e = ext.toLowerCase();
+    if (e === '.pdf') return 'pdf';
+    if (['.txt', '.md'].includes(e)) return 'text';
+    if (['.py', '.sh', '.js', '.ts', '.json', '.yaml', '.yml', '.sql', '.css', '.html'].includes(e)) return 'code';
+    return 'other';
 }
 
 function scanDirectory(dirPath: string): Folder {
@@ -23,6 +38,7 @@ function scanDirectory(dirPath: string): Folder {
     const entries = fs.readdirSync(dirPath, { withFileTypes: true });
 
     const videos: VideoFile[] = [];
+    const resources: ResourceFile[] = [];
     const subfolders: Folder[] = [];
 
     // First pass: collect all files in this directory to find subtitles easily
@@ -30,6 +46,7 @@ function scanDirectory(dirPath: string): Folder {
 
     entries.forEach(entry => {
         const fullPath = path.join(dirPath, entry.name);
+        const ext = path.extname(entry.name);
 
         if (entry.isDirectory()) {
             subfolders.push(scanDirectory(fullPath));
@@ -42,6 +59,13 @@ function scanDirectory(dirPath: string): Folder {
                 path: path.relative(VIDEO_DIR, fullPath),
                 subtitles: subtitle ? path.relative(VIDEO_DIR, path.join(dirPath, subtitle)) : undefined,
             });
+        } else if (!/\.(srt|vtt)$/i.test(entry.name)) {
+            // It's a resource (and not a subtitle file we already handle)
+            resources.push({
+                name: entry.name,
+                path: path.relative(VIDEO_DIR, fullPath),
+                type: getResourceType(ext),
+            });
         }
     });
 
@@ -49,6 +73,7 @@ function scanDirectory(dirPath: string): Folder {
         name: relPath === '' ? 'Tutorials' : name,
         path: relPath,
         videos: videos.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })),
+        resources: resources.sort((a, b) => a.name.localeCompare(b.name)),
         subfolders: subfolders.sort((a, b) => a.name.localeCompare(b.name)),
     };
 }
@@ -60,7 +85,6 @@ export function getTutorials(): Folder[] {
         return [];
     }
 
-    // We return the subfolders of the VIDEO_DIR as the top-level "Tutorials"
     const rootFolder = scanDirectory(VIDEO_DIR);
     return rootFolder.subfolders;
 }

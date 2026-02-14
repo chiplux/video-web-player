@@ -8,10 +8,31 @@ function srtToVtt(srt: string): string {
     const vtt = srt
         .replace(/\r\n/g, '\n')
         .replace(/\r/g, '\n')
-        // Replace comma in timestamps with dot
         .replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2');
 
     return 'WEBVTT\n\n' + vtt;
+}
+
+function getContentType(filePath: string): string {
+    const ext = path.extname(filePath).toLowerCase();
+    switch (ext) {
+        case '.pdf': return 'application/pdf';
+        case '.vtt': return 'text/vtt';
+        case '.txt':
+        case '.md':
+        case '.py':
+        case '.sh':
+        case '.js':
+        case '.ts':
+        case '.json':
+        case '.yaml':
+        case '.yml':
+        case '.sql':
+        case '.css':
+        case '.html':
+            return 'text/plain'; // Serve as plain text for viewing
+        default: return 'application/octet-stream';
+    }
 }
 
 export async function GET(request: NextRequest) {
@@ -32,10 +53,8 @@ export async function GET(request: NextRequest) {
         return new NextResponse('File not found', { status: 404 });
     }
 
-    console.log(`API Request for: ${absolutePath}`);
     const stat = fs.statSync(absolutePath);
     if (stat.isDirectory()) {
-        console.warn(`Attempted to read directory: ${absolutePath}`);
         return new NextResponse('Cannot read directory', { status: 400 });
     }
     const fileSize = stat.size;
@@ -53,9 +72,10 @@ export async function GET(request: NextRequest) {
     }
 
     const range = request.headers.get('range');
-    const contentType = absolutePath.endsWith('.vtt') ? 'text/vtt' : 'video/mp4';
+    const isVideo = /\.(mp4|mkv|webm)$/i.test(absolutePath);
+    const contentType = isVideo ? 'video/mp4' : getContentType(absolutePath);
 
-    if (range) {
+    if (range && isVideo) {
         const parts = range.replace(/bytes=/, "").split("-");
         const start = parseInt(parts[0], 10);
         const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
@@ -69,15 +89,17 @@ export async function GET(request: NextRequest) {
             'Content-Type': contentType,
         };
 
-        // @ts-expect-error: Next.js NextResponse expects a body of certain types, but ReadStream works here.
+        // @ts-expect-error: Next.js NextResponse expects a body of certain types
         return new NextResponse(file, { status: 206, headers: head });
     } else {
         const head = {
             'Content-Length': fileSize,
             'Content-Type': contentType,
+            // For PDFs we might want inline, for others too
+            'Content-Disposition': 'inline',
         };
         const file = fs.createReadStream(absolutePath);
-        // @ts-expect-error: Next.js NextResponse expects a body of certain types, but ReadStream works here.
+        // @ts-expect-error: Next.js NextResponse expects a body of certain types
         return new NextResponse(file, { status: 200, headers: head });
     }
 }
