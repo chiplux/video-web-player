@@ -15,17 +15,14 @@ describe('video utility', () => {
 
         // Mock readdirSync for top level folders
         mockedFs.readdirSync.mockReturnValueOnce([
-            { name: 'Tutorial 1', isDirectory: () => true },
+            { name: 'Tutorial 1', isFile: () => false, isDirectory: () => true },
         ] as any);
 
-        // Mock readdirSync for folderPath (inside getAllFiles)
-        mockedFs.readdirSync.mockReturnValueOnce(['video1.mp4'] as any);
-
-        // Mock statSync for file vs dir check
-        mockedFs.statSync.mockReturnValue({ isDirectory: () => false } as any);
-
-        // Second call to readdirSync for dir (inside subtitle map)
-        mockedFs.readdirSync.mockReturnValueOnce(['video1.mp4', 'video1.srt'] as any);
+        // Mock readdirSync for folderPath (inside scanDirectory - first call for subfolders)
+        mockedFs.readdirSync.mockReturnValueOnce([
+            { name: 'video1.mp4', isFile: () => true, isDirectory: () => false },
+            { name: 'video1.srt', isFile: () => true, isDirectory: () => false },
+        ] as any);
 
         const tutorials = getTutorials();
         expect(tutorials.length).toBe(1);

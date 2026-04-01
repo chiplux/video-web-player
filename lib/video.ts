@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const VIDEO_DIR = path.join(process.cwd(), 'video');
+const VIDEO_DIR = process.env.VIDEO_DIR ? path.resolve(process.cwd(), process.env.VIDEO_DIR) : path.join(process.cwd(), 'video');
 
 export interface VideoFile {
     name: string;
@@ -12,7 +12,7 @@ export interface VideoFile {
 export interface ResourceFile {
     name: string;
     path: string;
-    type: 'pdf' | 'text' | 'code' | 'other';
+    type: 'pdf' | 'text' | 'code' | 'html' | 'other';
 }
 
 export interface Folder {
@@ -23,11 +23,12 @@ export interface Folder {
     subfolders: Folder[];
 }
 
-function getResourceType(ext: string): 'pdf' | 'text' | 'code' | 'other' {
+function getResourceType(ext: string): 'pdf' | 'text' | 'code' | 'html' | 'other' {
     const e = ext.toLowerCase();
     if (e === '.pdf') return 'pdf';
-    if (['.txt', '.md'].includes(e)) return 'text';
-    if (['.py', '.sh', '.js', '.ts', '.json', '.yaml', '.yml', '.sql', '.css', '.html'].includes(e)) return 'code';
+    if (['.txt', '.md', '.url'].includes(e)) return 'text';
+    if (e === '.html') return 'html';
+    if (['.py', '.sh', '.js', '.ts', '.json', '.yaml', '.yml', '.sql', '.css'].includes(e)) return 'code';
     return 'other';
 }
 
@@ -42,7 +43,9 @@ function scanDirectory(dirPath: string): Folder {
     const subfolders: Folder[] = [];
 
     // First pass: collect all files in this directory to find subtitles easily
-    const allFileNames = entries.filter(e => e.isFile()).map(e => e.name);
+    const allFileNames = entries
+        .filter(e => typeof e === 'string' ? true : e.isFile())
+        .map(e => typeof e === 'string' ? e : e.name);
 
     entries.forEach(entry => {
         const fullPath = path.join(dirPath, entry.name);

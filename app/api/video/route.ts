@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
-const VIDEO_DIR = path.join(process.cwd(), 'video');
+const VIDEO_DIR = process.env.VIDEO_DIR ? path.resolve(process.cwd(), process.env.VIDEO_DIR) : path.join(process.cwd(), 'video');
 
 function srtToVtt(srt: string): string {
     const vtt = srt
@@ -18,8 +18,11 @@ function getContentType(filePath: string): string {
     switch (ext) {
         case '.pdf': return 'application/pdf';
         case '.vtt': return 'text/vtt';
+        case '.html':
+            return 'text/html';
         case '.txt':
         case '.md':
+        case '.url':
         case '.py':
         case '.sh':
         case '.js':
@@ -29,7 +32,6 @@ function getContentType(filePath: string): string {
         case '.yml':
         case '.sql':
         case '.css':
-        case '.html':
             return 'text/plain'; // Serve as plain text for viewing
         default: return 'application/octet-stream';
     }

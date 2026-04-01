@@ -53,7 +53,7 @@ export default function HomeClient({ tutorials }: HomeClientProps) {
             return;
         }
 
-        if (resource.type === 'text' || resource.type === 'code') {
+        if (resource.type === 'text' || resource.type === 'code' || resource.type === 'html') {
             setIsLoadingResource(true);
             try {
                 const res = await fetch(`/api/video?path=${encodeURIComponent(resource.path)}`);
@@ -152,9 +152,19 @@ export default function HomeClient({ tutorials }: HomeClientProps) {
                                         </div>
                                     </div>
                                 ) : resourceContent !== null ? (
+                                    selectedResource?.type === 'html' ? (
+                                        <iframe
+                                            srcDoc={resourceContent}
+                                            sandbox="allow-scripts allow-same-origin"
+                                            className="flex-1 w-full border-0"
+                                            style={{ minHeight: '60vh' }}
+                                            title={selectedResource?.name}
+                                        />
+                                    ) : (
                                     <div className="flex-1 p-6 lg:p-10 font-mono text-sm overflow-auto text-gray-300 selection:bg-white/20">
                                         <pre className="whitespace-pre-wrap leading-relaxed">{resourceContent}</pre>
                                     </div>
+                                    )
                                 ) : (
                                     <div className="flex-1 flex flex-col items-center justify-center text-center p-12">
                                         <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-6">
